@@ -17,7 +17,7 @@ void main() {
   final patterns = Patterns();
    
   
-  
+  Provider.debugCheckInvalidValueType = null;
   runApp(
        
        FutureBuilder(
@@ -119,6 +119,27 @@ class _MyHomePageState extends State<MyHomePage> {
   await dio.post('http://172.17.10.112:7000/sent/text',data:{'datasent':myController.text,'voiceName':voiceName});
   }
 
+  void _sentTextAndPlay()async {
+    final dio = Dio();
+    try{
+  await dio.post('https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize',
+  queryParameters: {'Content-Type':'application/x-www-form-urlencoded',
+  'Authorization':'Bearer t1.9euelZrIypWPnZiQy4vGnZCdkZ2Wie3rnpWajceWzJaQjc7GyseWnJCTnZvl8_duUX9F-e80BRke_d3z9y4AfUX57zQFGR79zef1656Vmp2UnsfPmJ6XiZTInMydipfL7_zF656Vmp2UnsfPmJ6XiZTInMydipfL.Bs6bVVFoSwsaEcUkXHYCpBfv47pf9QEx6DmLEqTQjIhVWcZU567TU59gehENR5TVSFQo3lOXr7rC1A_yirHEDQ',
+  'responseType': 'stream'},
+  
+  data:{'text':myController.text,
+        'lang': 'ru-RU',
+        'speed': '1',
+        'voice': voiceName,
+        'emotion': 'neutral',
+        'folderId': 'b1g0nrc61b32jd19t3pt',
+        'format': 'mp3'});
+    }
+    catch (e){
+      print(e);
+    }
+  }
+
   // List<DropdownMenuItem<String>>? _getPattern()  {
   //   final dio = Dio();
   //   print(dio.get('http://172.17.10.112:7000/get/pattern'));
@@ -127,14 +148,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String? voiceName; 
   final myController = TextEditingController();
+  //String? myController;
   String dropdownvalue = 'alena';
-
+  late PatternDTO valueFirst;
+  late Patterns patterns;
+  late List<DropdownMenuItem<PatternDTO>> menuItem;
 
     
   @override
   void initState() {
     // TODO: implement initState
-    super.initState();   
+    super.initState();
+    patterns = context.read<Patterns>();
+    valueFirst = patterns.list.first;   
+    menuItem = buildMenuItem();
     
   }
 
@@ -154,6 +181,10 @@ class _MyHomePageState extends State<MyHomePage> {
       'alexander',
     ];
 
+  List<DropdownMenuItem<PatternDTO>> buildMenuItem() {
+      return patterns.list.map((p) =>  DropdownMenuItem<PatternDTO>(value: p, child: Text('${p.mesage}', style: TextStyle(overflow: TextOverflow.clip)))).toList();
+  }
+
   @override
   Widget build(BuildContext context){   
 
@@ -168,25 +199,33 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children:[
-
-             DropdownButton(
-               selectedItemBuilder: (context) => Patterns.loadPatterns(),
-               onChanged: ,
-               ),
-            
-             const Text(
+            const Text(
                'YandexSpeachKit',
                style: TextStyle(fontSize: 30),
             ),
-             
-             TextField(
-               controller: myController, 
-               decoration: 
-               const InputDecoration(
-                 border: OutlineInputBorder(),
-                 hintText: 'Enter text',
-               ),
+
+             SizedBox(
+              width: 600,
+              child: DropdownButton<PatternDTO>(
+                isExpanded: true,
+                
+                value: valueFirst,
+                 items: menuItem,
+                 onChanged:(newValue) {setState(() {
+                   valueFirst = newValue!;
+                   myController.text = newValue.mesage.toString();
+                 });},
+                 ),
              ),
+             
+            //  TextField(
+            //    controller: myController, 
+            //    decoration: 
+            //    const InputDecoration(
+            //      border: OutlineInputBorder(),
+            //      hintText: 'Enter text',
+            //    ),
+            //  ),
 
             const SizedBox(height: 20),
 
@@ -216,17 +255,30 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() { dropdownvalue = newValue!; voiceName = newValue; });
                 },
                 //onTap:_incrementCounter,
-              ), 
+              ),
+              const SizedBox(width: 30),
+
+              FloatingActionButton(
+                onPressed: _sentTextAndPlay,
+                tooltip: 'play',
+                child: const Icon(Icons.keyboard_voice)),
+              const SizedBox(width: 30),
+              
+              FloatingActionButton(
+              onPressed: _sentText,
+              tooltip: 'sent server',
+              child: const Icon(Icons.send)
+            ),
             ],
             ),   
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _sentText,
-        tooltip: 'sent',
-        child: const Icon(Icons.send),
-      ), 
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _sentText,
+      //   tooltip: 'sent',
+      //   child: const Icon(Icons.send),
+      // ), 
     );
   }
 }
