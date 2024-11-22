@@ -1,10 +1,87 @@
+import 'dart:convert';
+import 'dart:js_interop';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:dropdown_flutter/custom_dropdown.dart';
+import 'package:flutter_yandexspeach/loaded.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:provider/provider.dart';
 
 
 void main() {
-  runApp(const MyApp());
+
+  
+
+  final patterns = Patterns();
+   
+  
+  
+  runApp(
+       
+       FutureBuilder(
+        future: patterns.loadPatterns(),
+        builder: (context, snapshot) {
+          if (patterns.list.isNotEmpty){
+              return Provider(create: (_) => patterns,  child: const MyApp()); 
+          } else {
+            return const LoadedWidget();
+
+          }
+        }, ));
+}
+
+class PatternDTO {
+  String? mesage;
+
+  PatternDTO({this.mesage});
+
+  PatternDTO.fromJson(Map<String, dynamic> json) {
+    mesage = json['MESSAGETEMPTEXTRU'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data =  <String, dynamic>{};
+    data['MESSAGETEMPTEXTRU'] = mesage;
+    return data;
+  }
+}
+   
+
+
+class Patterns with ChangeNotifier, DiagnosticableTreeMixin {
+  List<PatternDTO> _list = [];
+
+  List<PatternDTO> get list => _list;
+  
+  
+  Future<void> loadPatterns() async  {
+    final dio = Dio();
+    dio.interceptors.add(PrettyDioLogger());
+    try {
+    final response = await dio.get('http://172.17.10.112:7000/get/pattern');
+    if (response.statusCode == 200)
+    {
+      List<PatternDTO> list2 =  List<PatternDTO>.from(
+        response.data.map((v) => PatternDTO.fromJson(v)),
+      );
+      _list = list2;
+    } else {
+
+    }
+    } catch (e){
+       print('$e');
+    }
+    // notifyListeners();
+  }
+
+  /// Makes `Counter` readable inside the devtools by listing all of its properties
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(StringProperty('list', list.toString()));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -17,7 +94,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 60, 59, 131)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(178, 161, 205, 233)),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: ''),
@@ -34,91 +111,98 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+
 class _MyHomePageState extends State<MyHomePage> {
 
-  void _incrementCounter()async {
+  void _sentText()async {
     final dio = Dio();
-  await dio.post('http://172.17.10.112:7000/sent/text',data:{'datasent':pattern,'datasentvoice':voiceName});
+  await dio.post('http://172.17.10.112:7000/sent/text',data:{'datasent':myController.text,'voiceName':voiceName});
   }
 
-  List<DropdownMenuItem<String>>? _getPattern()  {
-    final dio = Dio();
-    dio.get('http://172.17.10.112:7000/get/pattern');
+  // List<DropdownMenuItem<String>>? _getPattern()  {
+  //   final dio = Dio();
+  //   print(dio.get('http://172.17.10.112:7000/get/pattern'));
+  // }
+
+
+  String? voiceName; 
+  final myController = TextEditingController();
+  String dropdownvalue = 'alena';
+
+
+    
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();   
+    
   }
 
 
-  String? voiceName;
-  String? pattern;
-
+  final List<String> list = <String>[
+      'alena',
+      'filipp',
+      'ermil',
+      'jane',
+      'omazh',
+      'zahar',
+      'dasha',
+      'julia',
+      'lera',
+      'masha',
+      'marina',
+      'alexander',
+    ];
 
   @override
-  //final myController = TextEditingController();
-  String dropdownvalue = 'alena';
-  //String dropdownvaluepattern = 'У выхода №%25 на 2 этаже терминала %24 … населенный пункт %22 авиакомпании %23';
-  Widget build(BuildContext context) {
-    const List<String> list = <String>[
-    'alena',
-    'filipp',
-    'ermil',
-    'jane',
-    'omazh',
-    'zahar',
-    'dasha',
-    'julia',
-    'lera',
-    'masha',
-    'marina',
-    'alexander',
-  ];
+  Widget build(BuildContext context){   
 
 
-  //@override
-  //Widget build(BuildContext context){
     return Scaffold(
-      backgroundColor:const Color.fromARGB(160, 37, 36, 36),
+      backgroundColor:const Color.fromARGB(159, 151, 191, 243),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(160, 37, 36, 36),
+        backgroundColor: const Color.fromARGB(159, 151, 191, 243),
         title: Text(widget.title),
       ),
       body: Container(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children:[
-            const Text(
-              '',
+
+             DropdownButton(
+               selectedItemBuilder: (context) => Patterns.loadPatterns(),
+               onChanged: ,
+               ),
+            
+             const Text(
+               'YandexSpeachKit',
+               style: TextStyle(fontSize: 30),
             ),
+             
+             TextField(
+               controller: myController, 
+               decoration: 
+               const InputDecoration(
+                 border: OutlineInputBorder(),
+                 hintText: 'Enter text',
+               ),
+             ),
+
+            const SizedBox(height: 20),
+
             const Text(
-              'YandexSpeachKit',
-              //style: Theme.of(context).textTheme.headlineMedium,
-            ), 
-            DropdownButton(
-              icon: const Icon(Icons.account_circle),
-               items: _getPattern().map((String items) {
-                       return DropdownMenuItem(
-                           value: items,
-                           child: Text(items),
-                       );
-                  }
-                  ).toList(),
-               onChanged: (String? newValue) {
-                   setState(() {pattern = newValue;});
-             }),
-            // TextField(
-            //   controller: myController, 
-            //   decoration: 
-            //   const InputDecoration(
-            //     border: OutlineInputBorder(),
-            //     hintText: 'Enter text',
-            //   ),
-            // ),
-            const SizedBox(height: 30),
-            const Text(
-              'Voice for voice acting'
+              'Voice for voice acting',
+              style: TextStyle(fontSize: 20)
             ),
+
+            const SizedBox(height: 10),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
               DropdownButton(
+              style: const TextStyle(fontSize: 15,
+              color: Color.fromARGB(159, 31, 31, 31)),
               value: dropdownvalue,
                   icon: const Icon(Icons.account_circle),
                   items:list.map((String items) {
@@ -139,7 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: _sentText,
         tooltip: 'sent',
         child: const Icon(Icons.send),
       ), 

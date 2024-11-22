@@ -13,7 +13,9 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
   dropdown_flutter: 1.0.1
+  provider: ^6.1.2
   
 
 dev_dependencies:
