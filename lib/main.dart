@@ -1,5 +1,5 @@
-import 'dart:convert';
-import 'dart:js_interop';
+//import 'dart:convert';
+//import 'dart:js_interop';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -60,7 +60,7 @@ class Patterns with ChangeNotifier, DiagnosticableTreeMixin {
     final dio = Dio();
     dio.interceptors.add(PrettyDioLogger());
     try {
-    final response = await dio.get('http://172.17.10.112:7000/get/pattern');
+    final response = await dio.get('http://172.17.10.12:7000/get/pattern');
     if (response.statusCode == 200)
     {
       List<PatternDTO> list2 =  List<PatternDTO>.from(
@@ -116,28 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _sentText()async {
     final dio = Dio();
-  await dio.post('http://172.17.10.112:7000/sent/text',data:{'datasent':myController.text,'voiceName':voiceName});
-  }
-
-  void _sentTextAndPlay()async {
-    final dio = Dio();
-    try{
-  await dio.post('https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize',
-  queryParameters: {'Content-Type':'application/x-www-form-urlencoded',
-  'Authorization':'Bearer t1.9euelZrIypWPnZiQy4vGnZCdkZ2Wie3rnpWajceWzJaQjc7GyseWnJCTnZvl8_duUX9F-e80BRke_d3z9y4AfUX57zQFGR79zef1656Vmp2UnsfPmJ6XiZTInMydipfL7_zF656Vmp2UnsfPmJ6XiZTInMydipfL.Bs6bVVFoSwsaEcUkXHYCpBfv47pf9QEx6DmLEqTQjIhVWcZU567TU59gehENR5TVSFQo3lOXr7rC1A_yirHEDQ',
-  'responseType': 'stream'},
-  
-  data:{'text':myController.text,
-        'lang': 'ru-RU',
-        'speed': '1',
-        'voice': voiceName,
-        'emotion': 'neutral',
-        'folderId': 'b1g0nrc61b32jd19t3pt',
-        'format': 'mp3'});
-    }
-    catch (e){
-      print(e);
-    }
+  await dio.post('http://172.17.10.12:7000/sent/text',data:{'datasent':myController.text,'voiceName':voiceName});
   }
 
   // List<DropdownMenuItem<String>>? _getPattern()  {
@@ -164,6 +143,10 @@ class _MyHomePageState extends State<MyHomePage> {
     menuItem = buildMenuItem();
     
   }
+  void _playerComplite(void event)
+    {
+      player.play(AssetSource('newFile.mp3'));
+   }
 
 
   final List<String> list = <String>[
@@ -259,7 +242,7 @@ class _MyHomePageState extends State<MyHomePage> {
               const SizedBox(width: 30),
 
               FloatingActionButton(
-                onPressed: _sentTextAndPlay,
+                onPressed: _playerComplite,
                 tooltip: 'play',
                 child: const Icon(Icons.keyboard_voice)),
               const SizedBox(width: 30),
